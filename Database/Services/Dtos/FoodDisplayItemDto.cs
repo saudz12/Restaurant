@@ -19,3 +19,9 @@ public class FoodDisplayItem
     public List<string> Alergeni { get; set; } = new List<string>();
     public List<FoodItemContentDto> Continut { get; set; } = new List<FoodItemContentDto>();
 }
+
+public class FoodItemContentDto
+{
+    public string Nume { get; set; }
+    public int Cantitate { get; set; }
+}

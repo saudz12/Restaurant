@@ -58,6 +58,42 @@ public class FoodDisplayService : IFoodDisplayService
         return result;
     }
 
+    public async Task<List<FoodDisplayItem>> SearchFoodItemsAsync(string searchTerm, List<string> excludedAllergens = null, CategoriiPreparate? categorie = null)
+    {
+        var allItems = categorie.HasValue
+            ? await GetFoodItemsByCategorieAsync(categorie.Value)
+            : await GetAllFoodItemsAsync();
+
+        var filteredItems = allItems;
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            searchTerm = searchTerm.ToLower().Trim();
+            filteredItems = filteredItems.Where(item =>
+                item.Nume.ToLower().Contains(searchTerm) ||
+                (item.Tip?.ToLower()?.Contains(searchTerm) ?? false)
+            ).ToList();
+        }
+
+        if (excludedAllergens != null && excludedAllergens.Any())
+        {
+            var normalizedExcludedAllergens = excludedAllergens
+                .Where(a => !string.IsNullOrWhiteSpace(a))
+                .Select(a => a.ToLower().Trim())
+                .ToList();
+
+            if (normalizedExcludedAllergens.Any())
+            {
+                filteredItems = filteredItems.Where(item =>
+                    !item.Alergeni.Any(alergen =>
+                        normalizedExcludedAllergens.Contains(alergen.ToLower()))
+                ).ToList();
+            }
+        }
+
+        return filteredItems;
+    }
+
     public async Task<FoodDisplayItem> GetFoodItemByIdAsync(int id, string type)
     {
         if (type.Equals("Preparat", System.StringComparison.OrdinalIgnoreCase))
@@ -109,7 +145,7 @@ public class FoodDisplayService : IFoodDisplayService
         {
             Id = meniu.Id,
             Nume = meniu.Nume,
-            Pret = meniu.PretTotal,
+            Pret = meniu.PretTotal, // This should now be calculated correctly
             Categorie = meniu.Categorie,
             PozaUrl = meniu.PozaUrl,
             Tip = "Menu",
@@ -121,5 +157,19 @@ public class FoodDisplayService : IFoodDisplayService
                 Cantitate = mp.Cantitate
             }).ToList()
         };
+    }
+
+    public async Task<List<string>> GetAllAllergensAsync()
+    {
+        var allItems = await GetAllFoodItemsAsync();
+
+        // Extract unique allergen names
+        var allergens = allItems
+            .SelectMany(item => item.Alergeni ?? new List<string>())
+            .Distinct()
+            .OrderBy(a => a)
+            .ToList();
+
+        return allergens;
     }
 }

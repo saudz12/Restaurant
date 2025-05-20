@@ -1,0 +1,170 @@
+﻿<Window x:Class="Restaurant.AddMenuWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Restaurant"
+        xmlns:viewmodels="clr-namespace:Restaurant.ViewModels" 
+        d:DataContext="{d:DesignInstance Type=viewmodels:AddMenuViewModel}"
+        mc:Ignorable="d"
+        Title="Add New Menu" Height="600" Width="800"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Menu details section -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <StackPanel Grid.Column="0" Margin="0,0,20,0">
+                <Label Content="Menu Name:" Target="{Binding ElementName=txtMenuName}"/>
+                <TextBox x:Name="txtMenuName" Text="{Binding MenuName, UpdateSourceTrigger=PropertyChanged}" 
+                         Margin="0,0,0,10"/>
+
+                <Label Content="Category:" Target="{Binding ElementName=cmbCategory}"/>
+                <ComboBox x:Name="cmbCategory" ItemsSource="{Binding AvailableCategories}" 
+                          SelectedItem="{Binding SelectedCategory}" Margin="0,0,0,10"/>
+
+                <Label Content="Image Path:" Target="{Binding ElementName=txtImagePath}"/>
+                <Grid Margin="0,0,0,10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBox x:Name="txtImagePath" Text="{Binding ImagePath}" Grid.Column="0"/>
+                    <Button Content="Browse..." Command="{Binding BrowseImageCommand}" 
+                            Grid.Column="1" Margin="5,0,0,0" Padding="10,0"/>
+                </Grid>
+
+                <Label Content="Menu Price Calculation:"/>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                    <TextBlock Text="Base Price:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <TextBlock Text="{Binding TotalPrice, StringFormat='{}{0:F2} RON'}" 
+                               VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,15,0"/>
+                    <TextBlock Text="Discount:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <TextBlock Text="{Binding DiscountPercentage, StringFormat='{}{0}%'}" 
+                               VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,15,0"/>
+                    <TextBlock Text="Final Price:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+                    <TextBlock Text="{Binding FinalPrice, StringFormat='{}{0:F2} RON'}" 
+                               VerticalAlignment="Center" FontWeight="Bold" Foreground="#4CAF50"/>
+                </StackPanel>
+            </StackPanel>
+
+            <Border Grid.Column="1" Width="150" Height="150" Background="#F5F5F5" 
+                    BorderBrush="#DDDDDD" BorderThickness="1">
+                <Image Source="{Binding ImagePath}" Stretch="UniformToFill"/>
+            </Border>
+        </Grid>
+
+        <!-- Menu items selection section -->
+        <Grid Grid.Row="1" Margin="0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Available preparate list -->
+            <DockPanel Grid.Column="0">
+                <TextBlock DockPanel.Dock="Top" Text="Available Dishes" 
+                          FontSize="14" FontWeight="Bold" Margin="0,0,0,5"/>
+                <ListView ItemsSource="{Binding AvailablePreparate}" BorderThickness="1">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Name" Width="150">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Nume}"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Price" Width="80">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Pret, StringFormat='{}{0:F2} RON'}" 
+                                                  HorizontalAlignment="Right"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="" Width="60">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Add" Command="{Binding DataContext.AddPreparatCommand, 
+                                                RelativeSource={RelativeSource AncestorType=ListView}}" 
+                                                CommandParameter="{Binding}" Padding="8,2"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </DockPanel>
+
+            <!-- Arrows/separator -->
+            <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="10,0">
+                <TextBlock Text="➡" FontSize="20" HorizontalAlignment="Center" Margin="0,5"/>
+                <TextBlock Text="➡" FontSize="20" HorizontalAlignment="Center" Margin="0,5"/>
+            </StackPanel>
+
+            <!-- Selected items list -->
+            <DockPanel Grid.Column="2">
+                <TextBlock DockPanel.Dock="Top" Text="Menu Items" 
+                          FontSize="14" FontWeight="Bold" Margin="0,0,0,5"/>
+                <ListView ItemsSource="{Binding SelectedItems}" BorderThickness="1">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Name" Width="120">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding PreparatName}"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Quantity (g)" Width="80">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}" 
+                                                Width="60" HorizontalAlignment="Right"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Price" Width="80">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding TotalPrice, StringFormat='{}{0:F2} RON'}" 
+                                                  HorizontalAlignment="Right"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="" Width="60">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Remove" Command="{Binding DataContext.RemovePreparatCommand, 
+                                                RelativeSource={RelativeSource AncestorType=ListView}}" 
+                                                CommandParameter="{Binding}" Padding="5,2"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </DockPanel>
+        </Grid>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Cancel" Command="{Binding CancelCommand}" 
+                    Padding="20,8" Margin="0,0,10,0"/>
+            <Button Content="Save Menu" Command="{Binding SaveCommand}" 
+                    Padding="20,8" Background="#4CAF50" Foreground="White"
+                    IsEnabled="{Binding CanSave}"/>
+        </StackPanel>
+    </Grid>
+</Window>

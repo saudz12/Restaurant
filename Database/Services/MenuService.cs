@@ -149,18 +149,16 @@ public class MenuService : IMenuService
 
     public double CalculateMeniuPrice(List<MenuPreparatDto> preparate)
     {
-        // Calculate total price of all preparate in menu
-        double totalPrice = preparate.Sum(p => p.PreparatPret * p.Cantitate);
+        double totalPrice = preparate.Sum(p =>
+            p.PreparatPret * ((double)p.Cantitate / p.CantitatePortie));
 
-        // Apply discount
         double discount = GetMenuDiscount();
         return totalPrice * (1 - discount);
     }
 
     public double GetMenuDiscount()
     {
-        // Get discount from configuration
-        double discount = 0.1; // Default 10% discount
+        double discount = 0.1; 
 
         string discountStr = _configuration["MenuDiscount"];
         if (!string.IsNullOrEmpty(discountStr) && double.TryParse(discountStr, out double configDiscount))
@@ -208,6 +206,7 @@ public class MenuService : IMenuService
                 PreparatId = preparat.Id,
                 PreparatNume = preparat.Nume,
                 Cantitate = menuPreparat.Cantitate,
+                CantitatePortie = preparat.CantitatePortie,
                 PreparatPret = preparat.Pret,
                 Alergeni = preparat.Alergeni?.Select(a => a.Nume).ToList() ?? new List<string>()
             });

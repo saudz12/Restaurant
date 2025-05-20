@@ -5,8 +5,9 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Restaurant"
         xmlns:converters="clr-namespace:Restaurant.Converters" 
+        xmlns:viewmodels="clr-namespace:Restaurant.ViewModels" d:DataContext="{d:DesignInstance Type=viewmodels:FoodDisplayViewModel}"
         mc:Ignorable="d"
-        Title="Restaurant Managemer" Height="650" Width="1000">
+        Title="Restaurant Managemer" Height="650" Width="1200">
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
@@ -46,6 +47,32 @@
                 </ComboBox>
                 <Button Content="Refresh" Command="{Binding RefreshCommand}" Padding="10,5" Margin="0,0,10,0"/>
                 <Button Content="Add New Dish" Command="{Binding AddNewPreparatCommand}" Padding="10,5" Background="#4CAF50" Foreground="White"/>
+                <Button Content="Add New Menu" Command="{Binding AddNewMenuCommand}" Padding="10,5" Background="#2196F3" Foreground="White" Margin="10,0,0,0"/>
+                
+                <TextBlock Text="Search:" VerticalAlignment="Center" Margin="20,0,10,0"/>
+                <TextBox Width="150" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,20,0"/>
+                <Expander Header="Filter by Allergens" Margin="0,0,10,0">
+                    <StackPanel>
+                        <TextBlock Text="Exclude dishes with these allergens:" Margin="0,5"/>
+                        <ItemsControl ItemsSource="{Binding AllergenFilters}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <CheckBox Content="{Binding Name}" 
+                              IsChecked="{Binding IsExcluded, Mode=TwoWay}" 
+                              Margin="5,2"
+                              Checked="AllergenFilter_Changed"
+                              Unchecked="AllergenFilter_Changed"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </StackPanel>
+                </Expander>
+
             </StackPanel>
         </Border>
 

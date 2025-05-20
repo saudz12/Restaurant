@@ -63,6 +63,32 @@ namespace Restaurant.ViewModels
 
         public ICommand RefreshCommand { get; }
         public ICommand AddNewPreparatCommand { get; }
+        public ICommand AddNewMenuCommand { get; }
+
+        private string _searchText;
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                _searchText = value;
+                OnPropertyChanged();
+                SearchCommand.Execute(null);
+            }
+        }
+
+        private ObservableCollection<AllergenFilter> _allergenFilters;
+        public ObservableCollection<AllergenFilter> AllergenFilters
+        {
+            get => _allergenFilters;
+            set
+            {
+                _allergenFilters = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ICommand SearchCommand { get; }
 
         public FoodDisplayViewModel(
             IFoodDisplayService foodDisplayService,
@@ -73,10 +99,14 @@ namespace Restaurant.ViewModels
             _menuService = menuService;
             _refreshService = refreshService;
 
+
             FoodItems = new ObservableCollection<FoodDisplayItem>();
 
             RefreshCommand = new RelayCommand(_ => LoadFoodItemsAsync().ConfigureAwait(false));
             AddNewPreparatCommand = new RelayCommand(_ => OpenAddPreparatWindow());
+            SearchCommand = new RelayCommand(_ => FilterFoodItemsAsync().ConfigureAwait(false));
+            AllergenFilters = new ObservableCollection<AllergenFilter>();
+            AddNewMenuCommand = new RelayCommand(_ => OpenAddMenuWindow());
 
             // Subscribe to data change notifications
             _refreshService.DataChanged += async (s, e) => await LoadFoodItemsAsync();
@@ -84,6 +114,7 @@ namespace Restaurant.ViewModels
 
         public async Task InitializeAsync()
         {
+            await LoadAllergensAsync();
             await LoadFoodItemsAsync();
         }
 
@@ -109,23 +140,69 @@ namespace Restaurant.ViewModels
             }
         }
 
+        private async Task LoadAllergensAsync()
+        {
+            try
+            {
+                // Assuming we add this to IFoodDisplayService
+                var allergens = await _foodDisplayService.GetAllAllergensAsync();
+
+                AllergenFilters.Clear();
+                foreach (var allergen in allergens)
+                {
+                    AllergenFilters.Add(new AllergenFilter
+                    {
+                        Name = allergen,
+                        IsExcluded = false
+                    });
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error loading allergens: {ex.Message}");
+            }
+        }
+
+        private async Task FilterFoodItemsAsync()
+        {
+            try
+            {
+                // Get excluded allergens (the ones with IsExcluded = true)
+                var excludedAllergens = AllergenFilters
+                    .Where(af => af.IsExcluded)
+                    .Select(af => af.Name)
+                    .ToList();
+
+                var filteredItems = await _foodDisplayService.SearchFoodItemsAsync(
+                    SearchText,
+                    excludedAllergens,
+                    _selectedCategorie);
+
+                FoodItems.Clear();
+                foreach (var item in filteredItems)
+                {
+                    FoodItems.Add(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error filtering food items: {ex.Message}");
+            }
+        }
+
         private void OpenAddPreparatWindow()
         {
             try
             {
-                // Create ViewModel using DependencyInjection
                 var viewModel = App.ServiceProvider.GetRequiredService<AddPreparatViewModel>();
 
-                // Create window
                 var window = new AddPreparatWindow(viewModel)
                 {
                     Owner = Application.Current.MainWindow
                 };
 
-                // Show as dialog
                 bool? result = window.ShowDialog();
 
-                // If saved successfully (dialog result = true), refresh the list
                 if (result == true)
                 {
                     LoadFoodItemsAsync().ConfigureAwait(false);
@@ -140,6 +217,35 @@ namespace Restaurant.ViewModels
                     MessageBoxImage.Error);
             }
         }
+
+        private void OpenAddMenuWindow()
+        {
+            try
+            {
+                var viewModel = App.ServiceProvider.GetRequiredService<AddMenuViewModel>();
+
+                var window = new AddMenuWindow(viewModel)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+
+                bool? result = window.ShowDialog();
+
+                if (result == true)
+                {
+                    LoadFoodItemsAsync().ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error opening Add Menu window: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
 
         // Simple ICommand implementation for WPF
         private class RelayCommand : ICommand
@@ -159,6 +265,37 @@ namespace Restaurant.ViewModels
             {
                 add { CommandManager.RequerySuggested += value; }
                 remove { CommandManager.RequerySuggested -= value; }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
+    public class AllergenFilter : INotifyPropertyChanged
+    {
+        private string _name;
+        public string Name
+        {
+            get => _name;
+            set
+            {
+                _name = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isExcluded;
+        public bool IsExcluded
+        {
+            get => _isExcluded;
+            set
+            {
+                _isExcluded = value;
+                OnPropertyChanged();
             }
         }
 

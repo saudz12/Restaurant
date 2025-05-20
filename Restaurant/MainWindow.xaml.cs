@@ -35,5 +35,15 @@ namespace Restaurant
         {
             await _viewModel.InitializeAsync();
         }
+
+        private void AllergenFilter_Changed(object sender, RoutedEventArgs e)
+        {
+            var viewModel = DataContext as FoodDisplayViewModel;
+            if (viewModel?.SearchCommand != null)
+            {
+                viewModel.SearchCommand.Execute(null);
+            }
+        }
+
     }
 }

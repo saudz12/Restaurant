@@ -19,3 +19,26 @@ public class PreparatDto
     public string PozaUrl { get; set; }
     public List<AlergenDto> Alergeni { get; set; } = new List<AlergenDto>();
 }
+
+public class PreparatCreateDto
+{
+    public string Nume { get; set; }
+    public double Pret { get; set; }
+    public int CantitatePortie { get; set; }
+    public int CantitateTotala { get; set; }
+    public CategoriiPreparate Categorie { get; set; }
+    public string PozaUrl { get; set; }
+    public List<int> AlergenIds { get; set; } = new List<int>();
+}
+
+public class PreparatUpdateDto
+{
+    public int Id { get; set; }
+    public string Nume { get; set; }
+    public double Pret { get; set; }
+    public int CantitatePortie { get; set; }
+    public int CantitateTotala { get; set; }
+    public CategoriiPreparate Categorie { get; set; }
+    public string PozaUrl { get; set; }
+    public List<int> AlergenIds { get; set; } = new List<int>();
+}

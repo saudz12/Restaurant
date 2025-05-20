@@ -56,10 +56,11 @@ namespace Restaurant
             services.AddSingleton<IDataRefreshService, DataRefreshService>();
 
             // Register ViewModels
-            services.AddTransient<ViewModels.FoodDisplayViewModel>();
+            services.AddTransient<FoodDisplayViewModel>();
 
             // Register Windows
             services.AddTransient<MainWindow>();
+            services.AddTransient<AddMenuViewModel>();
         }
 
         protected override void OnStartup(StartupEventArgs e)

@@ -13,4 +13,6 @@ public interface IFoodDisplayService
     Task<List<FoodDisplayItem>> GetAllFoodItemsAsync();
     Task<List<FoodDisplayItem>> GetFoodItemsByCategorieAsync(CategoriiPreparate categorie);
     Task<FoodDisplayItem> GetFoodItemByIdAsync(int id, string type);
+    Task<List<FoodDisplayItem>> SearchFoodItemsAsync(string searchTerm, List<string> excludedAllergens, CategoriiPreparate? categorie = null);
+    Task<List<string>> GetAllAllergensAsync();
 }

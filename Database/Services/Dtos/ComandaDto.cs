@@ -20,3 +20,30 @@ public class ComandaDto
     public double PretTotal => Items.Sum(i => i.PretTotal);
     public DateTime DataCreare { get; set; }
 }
+
+public class ComandaCreateDto
+{
+    public string UserEmail { get; set; }
+    public List<ComandaItemCreateDto> Items { get; set; } = new List<ComandaItemCreateDto>();
+}
+
+public class ComandaUpdateStareDto
+{
+    public int ComandaId { get; set; }
+    public StareComanda StareComanda { get; set; }
+}
+
+public class ComandaItemDto
+{
+    public int PreparatId { get; set; }
+    public string PreparatNume { get; set; }
+    public int Cantitate { get; set; }
+    public double PretUnitar { get; set; }
+    public double PretTotal => PretUnitar * Cantitate;
+}
+
+public class ComandaItemCreateDto
+{
+    public int PreparatId { get; set; }
+    public int Cantitate { get; set; }
+}
