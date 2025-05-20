@@ -1,0 +1,201 @@
+﻿<Window x:Class="Restaurant.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Restaurant"
+        xmlns:converters="clr-namespace:Restaurant.Converters" 
+        mc:Ignorable="d"
+        Title="Restaurant Managemer" Height="650" Width="1000">
+    <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+        <Style TargetType="Label">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="0,10,0,5"/>
+        </Style>
+
+        <Style TargetType="TextBlock" x:Key="AllergenTag">
+            <Setter Property="Background" Value="#FFE0E0"/>
+            <Setter Property="Foreground" Value="#D32F2F"/>
+            <Setter Property="Padding" Value="5,2"/>
+            <Setter Property="Margin" Value="2"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header with category filter -->
+        <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="10">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Filter by Category:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <ComboBox Width="150" 
+                  ItemsSource="{Binding AvailableCategorii}"
+                  SelectedItem="{Binding SelectedCategorie}"
+                  Margin="0,0,20,0">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <TextBlock Text="{Binding}"/>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <Button Content="Refresh" Command="{Binding RefreshCommand}" Padding="10,5" Margin="0,0,10,0"/>
+                <Button Content="Add New Dish" Command="{Binding AddNewPreparatCommand}" Padding="10,5" Background="#4CAF50" Foreground="White"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Main content -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="350"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Food items list -->
+            <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="0,0,1,0">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="Dishes &amp; Menus" 
+                              FontSize="16" FontWeight="Bold" Margin="10,10,0,5"/>
+
+                    <ListView ItemsSource="{Binding FoodItems}" 
+                              SelectedItem="{Binding SelectedFoodItem}"
+                              BorderThickness="0" Margin="10">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Name" Width="250">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel>
+                                                <TextBlock Text="{Binding Nume}" FontWeight="SemiBold"/>
+                                                <TextBlock Text="{Binding Tip}" FontSize="11" Foreground="Gray"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Category" Width="150">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Categorie}"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Price" Width="80">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Pret, StringFormat='{}{0:F2} RON'}" 
+                                                      HorizontalAlignment="Right"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="Available" Width="80">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                                <Ellipse Width="10" Height="10" Margin="0,0,5,0">
+                                                    <Ellipse.Style>
+                                                        <Style TargetType="Ellipse">
+                                                            <Setter Property="Fill" Value="#C62828"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsAvailable}" Value="True">
+                                                                    <Setter Property="Fill" Value="#2E7D32"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Ellipse.Style>
+                                                </Ellipse>
+                                                <TextBlock>
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock">
+                                                            <Setter Property="Text" Value="No"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsAvailable}" Value="True">
+                                                                    <Setter Property="Text" Value="Yes"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </DockPanel>
+            </Border>
+
+            <!-- GridSplitter -->
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" 
+                          Background="Transparent"/>
+
+            <!-- Details panel -->
+            <Border Grid.Column="2" Padding="20" BorderBrush="#DDDDDD" BorderThickness="0">
+                <ScrollViewer>
+                    <StackPanel Visibility="{Binding IsItemSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <!-- Image & name section -->
+                        <StackPanel HorizontalAlignment="Center" Margin="0,0,0,20">
+                            <Border Width="200" Height="200" Background="#F5F5F5" BorderBrush="#DDDDDD" 
+                                   BorderThickness="1" Margin="0,0,0,10">
+                                <Image Source="{Binding SelectedFoodItem.PozaUrl}" Stretch="UniformToFill"/>
+                            </Border>
+                            <TextBlock Text="{Binding SelectedFoodItem.Nume}" FontSize="18" FontWeight="Bold" 
+                                     HorizontalAlignment="Center"/>
+                            <TextBlock Text="{Binding SelectedFoodItem.Pret, StringFormat='{}{0:F2} RON'}" 
+                                     FontSize="16" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Visibility="{Binding HasAlergeni, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Label Content="Allergies:"/>
+                            <WrapPanel>
+                                <ItemsControl ItemsSource="{Binding SelectedFoodItem.Alergeni}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" Style="{StaticResource AllergenTag}"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <WrapPanel/>
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                </ItemsControl>
+                            </WrapPanel>
+                        </StackPanel>
+
+                        <!-- Contents section -->
+                        <Label Content="Contains:"/>
+                        <ItemsControl ItemsSource="{Binding SelectedFoodItem.Continut}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding Nume}" Margin="10,0,0,0" Grid.Column="0"/>
+                                        <TextBlock Text="{Binding Cantitate, StringFormat='{}{0}g'}" 
+                                                 HorizontalAlignment="Right" Grid.Column="1"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
+                        <!-- Actions section -->
+                        <StackPanel Margin="0,20,0,0">
+                            <Button Content="{Binding SelectedFoodItem.Tip, StringFormat='Add {0} to Order'}" 
+                                   Background="#4CAF50" Foreground="White" Padding="15,8" Margin="0,10,0,0"
+                                   IsEnabled="{Binding SelectedFoodItem.IsAvailable}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

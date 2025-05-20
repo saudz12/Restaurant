@@ -1,0 +1,171 @@
+﻿using Database;
+using Database.Enums;
+using Database.Services.Dtos;
+using Database.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Input;
+
+namespace Restaurant.ViewModels
+{
+    public class FoodDisplayViewModel : INotifyPropertyChanged
+    {
+        private readonly IFoodDisplayService _foodDisplayService;
+        private readonly IMenuService _menuService;
+        private readonly IDataRefreshService _refreshService;
+
+        private ObservableCollection<FoodDisplayItem> _foodItems;
+        public ObservableCollection<FoodDisplayItem> FoodItems
+        {
+            get => _foodItems;
+            set { _foodItems = value; OnPropertyChanged(); }
+        }
+
+        private FoodDisplayItem _selectedFoodItem;
+        public FoodDisplayItem SelectedFoodItem
+        {
+            get => _selectedFoodItem;
+            set
+            {
+                _selectedFoodItem = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(IsItemSelected));
+                OnPropertyChanged(nameof(HasAlergeni));
+            }
+        }
+
+        public bool IsItemSelected => SelectedFoodItem != null;
+        public bool HasAlergeni => SelectedFoodItem?.Alergeni?.Any() ?? false;
+
+        private CategoriiPreparate? _selectedCategorie;
+        public CategoriiPreparate? SelectedCategorie
+        {
+            get => _selectedCategorie;
+            set
+            {
+                _selectedCategorie = value;
+                OnPropertyChanged();
+                LoadFoodItemsAsync().ConfigureAwait(false);
+            }
+        }
+
+        public ObservableCollection<CategoriiPreparate> AvailableCategorii { get; } = new ObservableCollection<CategoriiPreparate>(
+            Enum.GetValues(typeof(CategoriiPreparate)).Cast<CategoriiPreparate>()
+        );
+
+        public ICommand RefreshCommand { get; }
+        public ICommand AddNewPreparatCommand { get; }
+
+        public FoodDisplayViewModel(
+            IFoodDisplayService foodDisplayService,
+            IMenuService menuService,
+            IDataRefreshService refreshService)
+        {
+            _foodDisplayService = foodDisplayService;
+            _menuService = menuService;
+            _refreshService = refreshService;
+
+            FoodItems = new ObservableCollection<FoodDisplayItem>();
+
+            RefreshCommand = new RelayCommand(_ => LoadFoodItemsAsync().ConfigureAwait(false));
+            AddNewPreparatCommand = new RelayCommand(_ => OpenAddPreparatWindow());
+
+            // Subscribe to data change notifications
+            _refreshService.DataChanged += async (s, e) => await LoadFoodItemsAsync();
+        }
+
+        public async Task InitializeAsync()
+        {
+            await LoadFoodItemsAsync();
+        }
+
+        private async Task LoadFoodItemsAsync()
+        {
+            FoodItems.Clear();
+
+            try
+            {
+                var items = _selectedCategorie.HasValue
+                    ? await _foodDisplayService.GetFoodItemsByCategorieAsync(_selectedCategorie.Value)
+                    : await _foodDisplayService.GetAllFoodItemsAsync();
+
+                foreach (var item in items)
+                {
+                    FoodItems.Add(item);
+                }
+            }
+            catch (Exception ex)
+            {
+                // In a real application, you would log this error
+                System.Diagnostics.Debug.WriteLine($"Error loading food items: {ex.Message}");
+            }
+        }
+
+        private void OpenAddPreparatWindow()
+        {
+            try
+            {
+                // Create ViewModel using DependencyInjection
+                var viewModel = App.ServiceProvider.GetRequiredService<AddPreparatViewModel>();
+
+                // Create window
+                var window = new AddPreparatWindow(viewModel)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+
+                // Show as dialog
+                bool? result = window.ShowDialog();
+
+                // If saved successfully (dialog result = true), refresh the list
+                if (result == true)
+                {
+                    LoadFoodItemsAsync().ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error opening Add Dish window: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        // Simple ICommand implementation for WPF
+        private class RelayCommand : ICommand
+        {
+            private readonly Action<object> _execute;
+            private readonly Predicate<object> _canExecute;
+
+            public RelayCommand(Action<object> execute, Predicate<object> canExecute = null)
+            {
+                _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+                _canExecute = canExecute;
+            }
+
+            public bool CanExecute(object parameter) => _canExecute?.Invoke(parameter) ?? true;
+            public void Execute(object parameter) => _execute(parameter);
+            public event EventHandler CanExecuteChanged
+            {
+                add { CommandManager.RequerySuggested += value; }
+                remove { CommandManager.RequerySuggested -= value; }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+}

@@ -1,0 +1,89 @@
+﻿using Database.Models;
+using Database.Repositories.Interfaces;
+using Database.Services.Dtos;
+using Database.Services.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Database.Services;
+
+public class UserService : IUserService
+{
+    private readonly IUserRepository _userRepository;
+
+    public UserService(IUserRepository userRepository)
+    {
+        _userRepository = userRepository;
+    }
+
+    public async Task<UserDto> GetUserByEmailAsync(string email)
+    {
+        var user = await _userRepository.GetByEmailAsync(email);
+        if (user == null)
+            return null;
+
+        return MapToUserDto(user);
+    }
+
+    public async Task<UserDto> RegisterUserAsync(UserRegisterDto userDto)
+    {
+        if (await _userRepository.ExistsAsync(userDto.Email))
+            throw new InvalidOperationException($"User with email {userDto.Email} already exists");
+
+        var user = new User
+        {
+            Email = userDto.Email,
+            Password = userDto.Password,
+            Nume = userDto.Nume,
+            Prenume = userDto.Prenume,
+            Adresa = userDto.Adresa,
+            Telefon = userDto.Telefon,
+            Angajat = userDto.IsAngajat
+        };
+
+        var createdUser = await _userRepository.AddAsync(user);
+        return MapToUserDto(createdUser);
+    }
+
+    public async Task<UserDto> UpdateUserAsync(UserUpdateDto userDto)
+    {
+        var user = await _userRepository.GetByEmailAsync(userDto.Email);
+        if (user == null)
+            throw new KeyNotFoundException($"User with email {userDto.Email} not found");
+
+        user.Nume = userDto.Nume;
+        user.Prenume = userDto.Prenume;
+        user.Adresa = userDto.Adresa;
+        user.Telefon = userDto.Telefon;
+
+        await _userRepository.UpdateAsync(user);
+        return MapToUserDto(user);
+    }
+
+    public async Task<bool> LoginAsync(UserLoginDto loginDto)
+    {
+        return await _userRepository.ValidateCredentialsAsync(loginDto.Email, loginDto.Password);
+    }
+
+    public async Task<bool> IsEmployeeAsync(string email)
+    {
+        var user = await _userRepository.GetByEmailAsync(email);
+        return user != null && user.Angajat;
+    }
+
+    private UserDto MapToUserDto(User user)
+    {
+        return new UserDto
+        {
+            Email = user.Email,
+            Nume = user.Nume,
+            Prenume = user.Prenume,
+            Adresa = user.Adresa,
+            Telefon = user.Telefon,
+            IsAngajat = user.Angajat
+        };
+    }
+}
