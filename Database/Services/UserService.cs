@@ -88,19 +88,6 @@ public class UserService : IUserService
     }
 }
 
-public interface IUserStateService
-{
-    event EventHandler UserStateChanged;
-
-    bool IsLoggedIn { get; }
-    bool IsEmployee { get; }
-    string CurrentUserEmail { get; }
-    UserDto CurrentUser { get; }
-
-    Task<bool> LoginAsync(string email, string password);
-    void Logout();
-}
-
 public class UserStateService : IUserStateService
 {
     private readonly IUserService _userService;

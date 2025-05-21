@@ -15,3 +15,16 @@ public interface IUserService
     Task<bool> LoginAsync(UserLoginDto loginDto);
     Task<bool> IsEmployeeAsync(string email);
 }
+
+public interface IUserStateService
+{
+    event EventHandler UserStateChanged;
+
+    bool IsLoggedIn { get; }
+    bool IsEmployee { get; }
+    string CurrentUserEmail { get; }
+    UserDto CurrentUser { get; }
+
+    Task<bool> LoginAsync(string email, string password);
+    void Logout();
+}

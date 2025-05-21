@@ -23,7 +23,6 @@ namespace Restaurant
         {
             InitializeComponent();
 
-            // This line is crucial - ensure it's present
             DataContext = viewModel;
 
             _viewModel = viewModel;

@@ -7,9 +7,10 @@
         xmlns:converters="clr-namespace:Restaurant.Converters" 
         xmlns:viewmodels="clr-namespace:Restaurant.ViewModels" d:DataContext="{d:DesignInstance Type=viewmodels:FoodDisplayViewModel}"
         mc:Ignorable="d"
-        Title="Restaurant Manager" Height="650" Width="1400">
+        Title="Restaurant Manager" Height="650" Width="1350">
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:IntToVisibilityConverter x:Key="IntToVisibilityConverter"/>
 
         <Style TargetType="Label">
             <Setter Property="FontWeight" Value="Bold"/>
@@ -71,28 +72,11 @@
                     </ComboBox>
 
                     <TextBlock Text="Search:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <TextBox Width="150" 
-                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
-                             Margin="0,0,10,0"/>
+                    <TextBox Width="150" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,10,0"/>
 
                     <Button Content="Search" Command="{Binding SearchCommand}" Padding="10,5" Margin="0,0,10,0"/>
                     <Button Content="Refresh" Command="{Binding RefreshCommand}" Padding="10,5" Margin="0,0,10,0"/>
 
-                    <!-- Buttons with conditional visibility -->
-                    <Button Content="Add New Dish" Command="{Binding AddNewPreparatCommand}" 
-                            Padding="10,5" Background="#4CAF50" Foreground="White" 
-                            Visibility="{Binding IsEmployee, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
-                    <Button Content="Add New Menu" Command="{Binding AddNewMenuCommand}" 
-                            Padding="10,5" Background="#2196F3" Foreground="White" Margin="10,0,0,0"
-                            Visibility="{Binding IsEmployee, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
-                    <Button Content="Create Order" Command="{Binding CreateOrderCommand}" 
-                            Padding="10,5" Background="#FF9800" Foreground="White" Margin="10,0,0,0"
-                            Visibility="{Binding IsCustomer, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
-                    <TextBlock Text="Search:" VerticalAlignment="Center" Margin="20,0,10,0"/>
-                    <TextBox Width="150" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,20,0"/>
                     <Expander Header="Filter by Allergens" Margin="0,0,10,0">
                         <StackPanel>
                             <TextBlock Text="Exclude dishes with these allergens:" Margin="0,5"/>
@@ -100,10 +84,10 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <CheckBox Content="{Binding Name}" 
-                                IsChecked="{Binding IsExcluded, Mode=TwoWay}" 
-                                Margin="5,2"
-                                Checked="AllergenFilter_Changed"
-                                Unchecked="AllergenFilter_Changed"/>
+                                                    IsChecked="{Binding IsExcluded, Mode=TwoWay}" 
+                                                    Margin="5,2"
+                                                    Checked="AllergenFilter_Changed"
+                                                    Unchecked="AllergenFilter_Changed"/>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                                 <ItemsControl.ItemsPanel>
@@ -114,6 +98,42 @@
                             </ItemsControl>
                         </StackPanel>
                     </Expander>
+
+                    <!-- Buttons with conditional visibility -->
+                    <Button Content="Add New Dish" Command="{Binding AddNewPreparatCommand}" 
+                            Padding="10,5" Background="#4CAF50" Foreground="White" 
+                            Visibility="{Binding IsEmployee, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <Button Content="Add New Menu" Command="{Binding AddNewMenuCommand}" 
+                            Padding="10,5" Background="#2196F3" Foreground="White" Margin="10,0,0,0"
+                            Visibility="{Binding IsEmployee, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <Button Content="Manage Orders" Command="{Binding ManageOrdersCommand}" 
+                            Padding="10,5" Background="#E91E63" Foreground="White" Margin="10,0,0,0"
+                            Visibility="{Binding IsEmployee, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <Button Content="Create Order" Command="{Binding CreateOrderCommand}" 
+                            Padding="10,5" Background="#FF9800" Foreground="White" Margin="10,0,0,0"
+                            Visibility="{Binding IsCustomer, Converter={StaticResource BooleanToVisibilityConverter}}">     
+                        <Button.ContentTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="Create Order" VerticalAlignment="Center"/>
+                                    <Border Background="#C62828" CornerRadius="10" Margin="5,0,0,0"
+                                            Visibility="{Binding DataContext.CartItemCount, RelativeSource={RelativeSource AncestorType=Button}, Converter={StaticResource IntToVisibilityConverter}}">
+                                        <TextBlock Text="{Binding DataContext.CartItemCount, RelativeSource={RelativeSource AncestorType=Button}}" 
+                                                    Foreground="White" Margin="5,0" FontSize="10"/>
+                                    </Border>
+                                </StackPanel>
+                            </DataTemplate>
+                        </Button.ContentTemplate>
+                    </Button>
+
+                    <Button Content="View Orders" Command="{Binding ViewOrdersCommand}" 
+                            Padding="10,5" Background="#673AB7" Foreground="White" Margin="10,0,0,0"
+                            Visibility="{Binding IsCustomer, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    
                 </StackPanel>
 
                 <!-- User info display -->
@@ -128,13 +148,14 @@
         <!-- Main content -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="906*"/>
+                <ColumnDefinition Width="139*"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="350"/>
             </Grid.ColumnDefinitions>
 
             <!-- Food items list -->
-            <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="0,0,1,0">
+            <Border Grid.Column="0" BorderBrush="#DDDDDD" BorderThickness="0,0,1,0" Grid.ColumnSpan="2">
                 <DockPanel>
                     <TextBlock DockPanel.Dock="Top" Text="Dishes &amp; Menus" 
                               FontSize="16" FontWeight="Bold" Margin="10,10,0,5"/>
@@ -208,14 +229,14 @@
             </Border>
 
             <!-- GridSplitter -->
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Center" VerticalAlignment="Stretch" 
+            <GridSplitter Grid.Column="2" Width="5" HorizontalAlignment="Center" 
                           Background="Transparent"/>
 
             <!-- Details panel -->
-            <Border Grid.Column="2" Padding="20" BorderBrush="#DDDDDD" BorderThickness="0">
+            <Border Grid.Column="3" Padding="20" BorderBrush="#DDDDDD" BorderThickness="0">
                 <ScrollViewer>
                     <StackPanel Visibility="{Binding IsItemSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <!-- Image & name section -->
+                        <!-- Image and name section -->
                         <StackPanel HorizontalAlignment="Center" Margin="0,0,0,20">
                             <Border Width="200" Height="200" Background="#F5F5F5" BorderBrush="#DDDDDD" 
                                    BorderThickness="1" Margin="0,0,0,10">
@@ -266,8 +287,10 @@
                         <!-- Actions section -->
                         <StackPanel Margin="0,20,0,0">
                             <Button Content="{Binding SelectedFoodItem.Tip, StringFormat='Add {0} to Order'}" 
+                                   Command="{Binding AddToCartCommand}" 
                                    Background="#4CAF50" Foreground="White" Padding="15,8" Margin="0,10,0,0"
-                                   IsEnabled="{Binding SelectedFoodItem.IsAvailable}"/>
+                                   IsEnabled="{Binding SelectedFoodItem.IsAvailable}"
+                                   Visibility="{Binding IsCustomer, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>

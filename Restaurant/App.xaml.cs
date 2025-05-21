@@ -2,7 +2,6 @@
 using System.Configuration;
 using System.Data;
 using System.Windows;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Database;
@@ -66,6 +65,10 @@ namespace Restaurant
             services.AddSingleton<IUserStateService, UserStateService>();
             services.AddTransient<LoginViewModel>();
             services.AddTransient<RegisterViewModel>();
+
+            services.AddTransient<CreateOrderViewModel>();
+            services.AddTransient<OrderHistoryViewModel>();
+            services.AddTransient<OrderManagerViewModel>();
         }
 
         protected override void OnStartup(StartupEventArgs e)
@@ -120,13 +123,10 @@ namespace Restaurant
         {
             try
             {
-                // Example of loading app settings
                 var settingsService = _serviceProvider.GetService<AppSettingsService>();
                 if (settingsService != null)
                 {
                     var settings = settingsService.LoadSettings();
-                    // Apply settings to application if needed
-                    // Example: ApplyTheme(settings.Theme);
                 }
             }
             catch (Exception ex)
@@ -141,13 +141,10 @@ namespace Restaurant
         {
             try
             {
-                // Example of saving app settings
                 var settingsService = _serviceProvider.GetService<AppSettingsService>();
                 if (settingsService != null)
                 {
-                    // Get current settings state and save
                     var settings = new AppSettings();
-                    // Example: settings.Theme = CurrentTheme;
                     settingsService.SaveSettings(settings);
                 }
             }

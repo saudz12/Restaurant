@@ -92,15 +92,12 @@ public class AddPreparatViewModel : INotifyPropertyChanged
         _alergenService = alergenService;
         _dataRefreshService = dataRefreshService;
 
-        // Initialize commands
         SaveCommand = new RelayCommand(async _ => await SavePreparatAsync(), _ => CanSave());
         CancelCommand = new RelayCommand(_ => CloseRequested?.Invoke(this, false));
         BrowseImageCommand = new RelayCommand(_ => BrowseForImage());
 
-        // Set default values
         Categorie = CategoriiPreparate.Aperitiv;
 
-        // Load allergens
         LoadAllergensAsync().ConfigureAwait(false);
     }
 
@@ -147,18 +144,14 @@ public class AddPreparatViewModel : INotifyPropertyChanged
                     .ToList()
             };
 
-            // Save using service
             await _preparatService.CreatePreparatAsync(preparatDto);
 
-            // Notify data change
             _dataRefreshService.NotifyDataChanged();
 
-            // Close the window
             CloseRequested?.Invoke(this, true);
         }
         catch (Exception ex)
         {
-            // Handle error (log or show message)
             System.Windows.MessageBox.Show(
                 $"Error saving preparat: {ex.Message}",
                 "Save Error",
@@ -224,27 +217,5 @@ public class AllergenSelection : INotifyPropertyChanged
     protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
     {
         PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-}
-
-public class RelayCommand : ICommand
-{
-    private readonly Action<object> _execute;
-    private readonly Predicate<object> _canExecute;
-
-    public RelayCommand(Action<object> execute, Predicate<object> canExecute = null)
-    {
-        _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-        _canExecute = canExecute;
-    }
-
-    public bool CanExecute(object parameter) => _canExecute?.Invoke(parameter) ?? true;
-
-    public void Execute(object parameter) => _execute(parameter);
-
-    public event EventHandler CanExecuteChanged
-    {
-        add { CommandManager.RequerySuggested += value; }
-        remove { CommandManager.RequerySuggested -= value; }
     }
 }

@@ -30,6 +30,23 @@ namespace Restaurant.ViewModels
             get => _foodItems;
             set { _foodItems = value; OnPropertyChanged(); }
         }
+        public ObservableCollection<CategoriiPreparate> AvailableCategorii { get; } = new ObservableCollection<CategoriiPreparate>(
+            Enum.GetValues(typeof(CategoriiPreparate)).Cast<CategoriiPreparate>()
+        );
+
+        private ObservableCollection<OrderItemViewModel> _cartItems = new ObservableCollection<OrderItemViewModel>();
+        public ObservableCollection<OrderItemViewModel> CartItems => _cartItems;
+
+        private ObservableCollection<AllergenFilter> _allergenFilters;
+        public ObservableCollection<AllergenFilter> AllergenFilters
+        {
+            get => _allergenFilters;
+            set
+            {
+                _allergenFilters = value;
+                OnPropertyChanged();
+            }
+        }
 
         private FoodDisplayItem _selectedFoodItem;
         public FoodDisplayItem SelectedFoodItem
@@ -46,39 +63,11 @@ namespace Restaurant.ViewModels
 
         public bool IsItemSelected => SelectedFoodItem != null;
         public bool HasAlergeni => SelectedFoodItem?.Alergeni?.Any() ?? false;
-
+        public int CartItemCount => _cartItems.Sum(item => item.Quantity);
         public bool IsLoggedIn => _userStateService.IsLoggedIn;
         public bool IsEmployee => _userStateService.IsEmployee;
         public bool IsCustomer => IsLoggedIn && !IsEmployee;
         public string CurrentUserName => IsLoggedIn ? $"{_userStateService.CurrentUser.Nume} {_userStateService.CurrentUser.Prenume}" : string.Empty;
-
-
-        private CategoriiPreparate? _selectedCategorie;
-        public CategoriiPreparate? SelectedCategorie
-        {
-            get => _selectedCategorie;
-            set
-            {
-                _selectedCategorie = value;
-                OnPropertyChanged();
-                LoadFoodItemsAsync().ConfigureAwait(false);
-            }
-        }
-
-        public ObservableCollection<CategoriiPreparate> AvailableCategorii { get; } = new ObservableCollection<CategoriiPreparate>(
-            Enum.GetValues(typeof(CategoriiPreparate)).Cast<CategoriiPreparate>()
-        );
-
-        public ICommand RefreshCommand { get; }
-        public ICommand AddNewPreparatCommand { get; }
-        public ICommand AddNewMenuCommand { get; }
-
-        public ICommand LoginCommand { get; }
-        public ICommand RegisterCommand { get; }
-        public ICommand LogoutCommand { get; }
-        public ICommand ExitCommand { get; }
-        public ICommand CreateOrderCommand { get; }
-
 
         private string _searchText;
         public string SearchText
@@ -92,18 +81,31 @@ namespace Restaurant.ViewModels
             }
         }
 
-        private ObservableCollection<AllergenFilter> _allergenFilters;
-        public ObservableCollection<AllergenFilter> AllergenFilters
+        private CategoriiPreparate? _selectedCategorie;
+        public CategoriiPreparate? SelectedCategorie
         {
-            get => _allergenFilters;
+            get => _selectedCategorie;
             set
             {
-                _allergenFilters = value;
+                _selectedCategorie = value;
                 OnPropertyChanged();
+                LoadFoodItemsAsync().ConfigureAwait(false);
             }
         }
 
+
+        public ICommand RefreshCommand { get; }
+        public ICommand AddNewPreparatCommand { get; }
+        public ICommand AddNewMenuCommand { get; }
+        public ICommand LoginCommand { get; }
+        public ICommand RegisterCommand { get; }
+        public ICommand LogoutCommand { get; }
+        public ICommand ExitCommand { get; }
+        public ICommand CreateOrderCommand { get; }
         public ICommand SearchCommand { get; }
+        public ICommand AddToCartCommand { get; }
+        public ICommand ViewOrdersCommand { get; }
+        public ICommand ManageOrdersCommand { get; }
 
         public FoodDisplayViewModel(
             IFoodDisplayService foodDisplayService,
@@ -128,7 +130,10 @@ namespace Restaurant.ViewModels
             RegisterCommand = new RelayCommand(_ => OpenRegisterWindow());
             LogoutCommand = new RelayCommand(_ => Logout(), _ => IsLoggedIn);
             ExitCommand = new RelayCommand(_ => Application.Current.Shutdown());
-            CreateOrderCommand = new RelayCommand(_ => OpenCreateOrderWindow());
+            CreateOrderCommand = new RelayCommand(_ => OpenCreateOrderWindow(), _ => IsCustomer);
+            AddToCartCommand = new RelayCommand(_ => AddToCart(), _ => SelectedFoodItem != null && SelectedFoodItem.IsAvailable);
+            ViewOrdersCommand = new RelayCommand(_ => OpenOrderHistoryWindow(), _ => IsCustomer);
+            ManageOrdersCommand = new RelayCommand(_ => OpenOrderManagementWindow(), _ => IsEmployee);
 
             // Subscribe to data change notifications
             _refreshService.DataChanged += async (s, e) => await LoadFoodItemsAsync();
@@ -157,7 +162,6 @@ namespace Restaurant.ViewModels
             }
             catch (Exception ex)
             {
-                // In a real application, you would log this error
                 System.Diagnostics.Debug.WriteLine($"Error loading food items: {ex.Message}");
             }
         }
@@ -166,7 +170,6 @@ namespace Restaurant.ViewModels
         {
             try
             {
-                // Assuming we add this to IFoodDisplayService
                 var allergens = await _foodDisplayService.GetAllAllergensAsync();
 
                 AllergenFilters.Clear();
@@ -189,7 +192,6 @@ namespace Restaurant.ViewModels
         {
             try
             {
-                // Get excluded allergens (the ones with IsExcluded = true)
                 var excludedAllergens = AllergenFilters
                     .Where(af => af.IsExcluded)
                     .Select(af => af.Name)
@@ -358,29 +360,155 @@ namespace Restaurant.ViewModels
 
         private void OpenCreateOrderWindow()
         {
-            //to-do
-            MessageBox.Show("Order creation", "to-do", MessageBoxButton.OK, MessageBoxImage.Information);
+            try
+            {
+                if (!IsCustomer)
+                {
+                    MessageBox.Show(
+                        "You need to be logged in as a customer to place an order.",
+                        "Login Required",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return;
+                }
+
+                if (_cartItems.Count == 0)
+                {
+                    MessageBox.Show(
+                        "Your order is empty. Please add items to your order first.",
+                        "Empty Order",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return;
+                }
+
+                var viewModel = App.ServiceProvider.GetRequiredService<CreateOrderViewModel>();
+
+                var window = new CreateOrderWindow(viewModel)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+
+                viewModel.InitializeWithCartItems(_cartItems.ToList());
+
+                bool? result = window.ShowDialog();
+
+                if (result == true)
+                {
+                    _cartItems.Clear();
+                    OnPropertyChanged(nameof(CartItemCount));
+                    LoadFoodItemsAsync().ConfigureAwait(false);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error opening order window: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
-
-        // Simple ICommand implementation for WPF
-        private class RelayCommand : ICommand
+        private void AddToCart()
         {
-            private readonly Action<object> _execute;
-            private readonly Predicate<object> _canExecute;
+            if (SelectedFoodItem == null) return;
 
-            public RelayCommand(Action<object> execute, Predicate<object> canExecute = null)
+            var existingItem = _cartItems.FirstOrDefault(i =>
+                i.ItemId == SelectedFoodItem.Id && i.ItemType == SelectedFoodItem.Tip);
+
+            if (existingItem != null)
             {
-                _execute = execute ?? throw new ArgumentNullException(nameof(execute));
-                _canExecute = canExecute;
+                existingItem.Quantity++;
+            }
+            else
+            {
+                var newItem = new OrderItemViewModel
+                {
+                    ItemId = SelectedFoodItem.Id,
+                    ItemName = SelectedFoodItem.Nume,
+                    ItemType = SelectedFoodItem.Tip,
+                    UnitPrice = SelectedFoodItem.Pret,
+                    Quantity = 1
+                };
+
+                _cartItems.Add(newItem);
             }
 
-            public bool CanExecute(object parameter) => _canExecute?.Invoke(parameter) ?? true;
-            public void Execute(object parameter) => _execute(parameter);
-            public event EventHandler CanExecuteChanged
+            OnPropertyChanged(nameof(CartItemCount));
+
+            MessageBox.Show(
+                $"{SelectedFoodItem.Nume} added to your order.",
+                "Added to Order",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
+        }
+
+        private void OpenOrderHistoryWindow()
+        {
+            try
             {
-                add { CommandManager.RequerySuggested += value; }
-                remove { CommandManager.RequerySuggested -= value; }
+                if (!IsCustomer)
+                {
+                    MessageBox.Show(
+                        "You need to be logged in as a customer to view your orders.",
+                        "Login Required",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return;
+                }
+
+                var viewModel = App.ServiceProvider.GetRequiredService<OrderHistoryViewModel>();
+
+                var window = new OrderHistoryWindow(viewModel)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+
+                window.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error opening order history: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void OpenOrderManagementWindow()
+        {
+            try
+            {
+                if (!IsEmployee)
+                {
+                    MessageBox.Show(
+                        "You need to be logged in as an employee to manage orders.",
+                        "Employee Access Required",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
+                    return;
+                }
+
+                var viewModel = App.ServiceProvider.GetRequiredService<OrderManagerViewModel>();
+
+                // Create window
+                var window = new OrderManagerWindow(viewModel)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+
+                // Show as dialog
+                window.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error opening order management: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
             }
         }
 

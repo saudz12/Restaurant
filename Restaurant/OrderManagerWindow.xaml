@@ -1,0 +1,279 @@
+﻿<Window x:Class="Restaurant.OrderManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Restaurant"
+        xmlns:viewmodels="clr-namespace:Restaurant.ViewModels" 
+        xmlns:converters="clr-namespace:Restaurant.Converters"
+        xmlns:enums="clr-namespace:Database.Enums;assembly=Database"
+        d:DataContext="{d:DesignInstance Type=viewmodels:OrderManagerViewModel}"
+        mc:Ignorable="d"
+        Title="Order Manager" Height="600" Width="1000"
+        WindowStartupLocation="CenterOwner"
+        >
+
+    <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
+        <converters:StatusConverter x:Key="StatusConverter"/>
+        <Style x:Key="StatusTextStyle" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="#757575"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding StareComanda}" Value="{x:Static enums:StareComanda.Inregistrata}">
+                    <Setter Property="Foreground" Value="#2196F3"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding StareComanda}" Value="{x:Static enums:StareComanda.InPregatire}">
+                    <Setter Property="Foreground" Value="#FF9800"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding StareComanda}" Value="{x:Static enums:StareComanda.PeDrum}">
+                    <Setter Property="Foreground" Value="#9C27B0"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding StareComanda}" Value="{x:Static enums:StareComanda.Livrata}">
+                    <Setter Property="Foreground" Value="#4CAF50"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding StareComanda}" Value="{x:Static enums:StareComanda.Anulata}">
+                    <Setter Property="Foreground" Value="#F44336"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="0" Text="Order Management" FontSize="24" FontWeight="Bold"/>
+
+            <Button Grid.Column="1" Content="Refresh" Command="{Binding RefreshCommand}" 
+                    Padding="15,5" Margin="0,0,0,0"/>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="5"/>
+                <ColumnDefinition Width="1.5*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Order list -->
+            <ListView Grid.Column="0" ItemsSource="{Binding Orders}" 
+                      SelectedItem="{Binding SelectedOrder}" BorderThickness="1">
+                <ListView.View>
+                    <GridView>
+                        <GridViewColumn Header="Order #" Width="80">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Id}" FontWeight="SemiBold"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Customer" Width="120">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock>
+                                        <Run Text="{Binding UserNume}"/>
+                                        <Run Text=" "/>
+                                        <Run Text="{Binding UserPrenume}"/>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Date" Width="150">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding DataCreare, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Total" Width="80">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding PretTotal, StringFormat='{}{0:F2} RON'}" 
+                                              HorizontalAlignment="Right"/>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                        <GridViewColumn Header="Status" Width="100">
+                            <GridViewColumn.CellTemplate>
+                                <DataTemplate>
+                                    <TextBlock Style="{StaticResource StatusTextStyle}">
+                                        <TextBlock.Text>
+                                            <MultiBinding StringFormat="{}{0}">
+                                                <Binding Path="StareComanda" 
+                                                         Converter="{StaticResource StatusConverter}"/>
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </DataTemplate>
+                            </GridViewColumn.CellTemplate>
+                        </GridViewColumn>
+                    </GridView>
+                </ListView.View>
+            </ListView>
+
+            <!-- Splitter -->
+            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch"/>
+
+            <!-- Order details -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Order header -->
+                <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" 
+                        Padding="10" Margin="0,0,0,10"
+                        Visibility="{Binding IsOrderSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Order #:" FontWeight="Bold" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding SelectedOrder.Id}"/>
+
+                        <TextBlock Grid.Row="1" Grid.Column="0" Text="Customer:" FontWeight="Bold" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1">
+                            <Run Text="{Binding SelectedOrder.UserNume}"/>
+                            <Run Text=" "/>
+                            <Run Text="{Binding SelectedOrder.UserPrenume}"/>
+                        </TextBlock>
+
+                        <TextBlock Grid.Row="2" Grid.Column="0" Text="Phone:" FontWeight="Bold" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding SelectedOrder.UserTelefon}"/>
+
+                        <TextBlock Grid.Row="3" Grid.Column="0" Text="Address:" FontWeight="Bold" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding SelectedOrder.UserAdresa}" TextWrapping="Wrap"/>
+
+                        <TextBlock Grid.Row="4" Grid.Column="0" Text="Date:" FontWeight="Bold" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding SelectedOrder.DataCreare, StringFormat='{}{0:dd/MM/yyyy HH:mm}'}"/>
+
+                        <TextBlock Grid.Row="5" Grid.Column="0" Text="Total:" FontWeight="Bold" Margin="0,0,10,5"/>
+                        <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding SelectedOrder.PretTotal, StringFormat='{}{0:F2} RON'}" 
+                                  FontWeight="SemiBold"/>
+                    </Grid>
+                </Border>
+
+                <!-- Order management controls -->
+                <Border Grid.Row="1" BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" 
+                        Padding="10" Margin="0,0,0,10"
+                        Visibility="{Binding IsOrderSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBlock Grid.Column="0" Text="Update Status:" 
+                                  VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,10,0"/>
+
+                        <ComboBox Grid.Column="1" ItemsSource="{Binding AvailableStatuses}" 
+                                 SelectedItem="{Binding SelectedStatus}" Margin="0,0,10,0">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding Converter={StaticResource StatusConverter}}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+
+                        <StackPanel Grid.Column="2" Orientation="Horizontal">
+                            <Button Content="Update Status" Command="{Binding UpdateStatusCommand}" 
+                                    Padding="10,5" Margin="0,0,10,0" Background="#4CAF50" Foreground="White"/>
+
+                            <Button Content="Cancel Order" Command="{Binding CancelOrderCommand}" 
+                                    Padding="10,5" Background="#F44336" Foreground="White"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+                <!-- Order items list -->
+                <ListView Grid.Row="2" ItemsSource="{Binding SelectedOrder.Items}" 
+                          BorderThickness="1" Margin="0,5,0,0"
+                          Visibility="{Binding IsOrderSelected, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Header="Item" Width="200">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding PreparatNume}"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Quantity" Width="80">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Cantitate}" HorizontalAlignment="Center"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Unit Price" Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding PretUnitar, StringFormat='{}{0:F2} RON'}" 
+                                                  HorizontalAlignment="Right"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                            <GridViewColumn Header="Total" Width="100">
+                                <GridViewColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding PretTotal, StringFormat='{}{0:F2} RON'}" 
+                                                  HorizontalAlignment="Right" FontWeight="SemiBold"/>
+                                    </DataTemplate>
+                                </GridViewColumn.CellTemplate>
+                            </GridViewColumn>
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+
+                <!-- No order selected message -->
+                <TextBlock Grid.Row="1" Grid.RowSpan="2" Text="Select an order to view details" 
+                          HorizontalAlignment="Center" VerticalAlignment="Center" 
+                          Foreground="Gray" FontStyle="Italic"
+                          Visibility="{Binding IsOrderSelected, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=inverse}"/>
+
+                <!-- Loading indicator -->
+                <Border Grid.RowSpan="3" Background="#80FFFFFF" 
+                        Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="Loading orders..." 
+                              HorizontalAlignment="Center" VerticalAlignment="Center" 
+                              FontSize="16" FontWeight="SemiBold"/>
+                </Border>
+
+                <!-- Error message -->
+                <Border Grid.RowSpan="3" Background="#80FFFFFF" 
+                        Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}">
+                    <TextBlock Text="{Binding ErrorMessage}" 
+                              HorizontalAlignment="Center" VerticalAlignment="Center" 
+                              Foreground="Red" FontSize="16" TextWrapping="Wrap" MaxWidth="400"/>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <Button Grid.Row="2" Content="Close" Command="{Binding CloseCommand}" 
+                HorizontalAlignment="Right" Padding="20,8" Margin="0,20,0,0"/>
+    </Grid>
+</Window>
