@@ -7,7 +7,7 @@
         xmlns:converters="clr-namespace:Restaurant.Converters" 
         xmlns:viewmodels="clr-namespace:Restaurant.ViewModels" d:DataContext="{d:DesignInstance Type=viewmodels:FoodDisplayViewModel}"
         mc:Ignorable="d"
-        Title="Restaurant Managemer" Height="650" Width="1200">
+        Title="Restaurant Manager" Height="650" Width="1200">
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
@@ -27,9 +27,25 @@
 
     <Grid>
         <Grid.RowDefinitions>
+            <!-- Menu Bar -->
             <RowDefinition Height="Auto"/>
+            <!-- Header/Filter -->
+            <RowDefinition Height="Auto"/>
+            <!-- Main Content -->
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
+
+        <Menu Grid.Row="0">
+            <MenuItem Header="File">
+                <MenuItem Header="Login" Command="{Binding LoginCommand}"/>
+                <MenuItem Header="Register" Command="{Binding RegisterCommand}"/>
+                <Separator/>
+                <MenuItem Header="Logout" Command="{Binding LogoutCommand}" 
+                      Visibility="{Binding IsLoggedIn, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <Separator/>
+                <MenuItem Header="Exit" Command="{Binding ExitCommand}"/>
+            </MenuItem>
+        </Menu>
 
         <!-- Header with category filter -->
         <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="10">

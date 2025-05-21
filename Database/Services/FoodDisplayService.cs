@@ -145,7 +145,7 @@ public class FoodDisplayService : IFoodDisplayService
         {
             Id = meniu.Id,
             Nume = meniu.Nume,
-            Pret = meniu.PretTotal, // This should now be calculated correctly
+            Pret = meniu.PretTotal, 
             Categorie = meniu.Categorie,
             PozaUrl = meniu.PozaUrl,
             Tip = "Menu",
@@ -163,7 +163,6 @@ public class FoodDisplayService : IFoodDisplayService
     {
         var allItems = await GetAllFoodItemsAsync();
 
-        // Extract unique allergen names
         var allergens = allItems
             .SelectMany(item => item.Alergeni ?? new List<string>())
             .Distinct()

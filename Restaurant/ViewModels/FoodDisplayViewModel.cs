@@ -1,5 +1,6 @@
 ﻿using Database;
 using Database.Enums;
+using Database.Services;
 using Database.Services.Dtos;
 using Database.Services.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,7 @@ namespace Restaurant.ViewModels
         private readonly IFoodDisplayService _foodDisplayService;
         private readonly IMenuService _menuService;
         private readonly IDataRefreshService _refreshService;
+        private readonly IUserStateService _userStateService;
 
         private ObservableCollection<FoodDisplayItem> _foodItems;
         public ObservableCollection<FoodDisplayItem> FoodItems
@@ -45,6 +47,12 @@ namespace Restaurant.ViewModels
         public bool IsItemSelected => SelectedFoodItem != null;
         public bool HasAlergeni => SelectedFoodItem?.Alergeni?.Any() ?? false;
 
+        public bool IsLoggedIn => _userStateService.IsLoggedIn;
+        public bool IsEmployee => _userStateService.IsEmployee;
+        public bool IsCustomer => IsLoggedIn && !IsEmployee;
+        public string CurrentUserName => IsLoggedIn ? $"{_userStateService.CurrentUser.Nume} {_userStateService.CurrentUser.Prenume}" : string.Empty;
+
+
         private CategoriiPreparate? _selectedCategorie;
         public CategoriiPreparate? SelectedCategorie
         {
@@ -64,6 +72,13 @@ namespace Restaurant.ViewModels
         public ICommand RefreshCommand { get; }
         public ICommand AddNewPreparatCommand { get; }
         public ICommand AddNewMenuCommand { get; }
+
+        public ICommand LoginCommand { get; }
+        public ICommand RegisterCommand { get; }
+        public ICommand LogoutCommand { get; }
+        public ICommand ExitCommand { get; }
+        public ICommand CreateOrderCommand { get; }
+
 
         private string _searchText;
         public string SearchText
@@ -93,12 +108,13 @@ namespace Restaurant.ViewModels
         public FoodDisplayViewModel(
             IFoodDisplayService foodDisplayService,
             IMenuService menuService,
-            IDataRefreshService refreshService)
+            IDataRefreshService refreshService,
+            IUserStateService userStateService)
         {
             _foodDisplayService = foodDisplayService;
             _menuService = menuService;
             _refreshService = refreshService;
-
+            _userStateService = userStateService;
 
             FoodItems = new ObservableCollection<FoodDisplayItem>();
 
@@ -107,6 +123,12 @@ namespace Restaurant.ViewModels
             SearchCommand = new RelayCommand(_ => FilterFoodItemsAsync().ConfigureAwait(false));
             AllergenFilters = new ObservableCollection<AllergenFilter>();
             AddNewMenuCommand = new RelayCommand(_ => OpenAddMenuWindow());
+
+            LoginCommand = new RelayCommand(_ => OpenLoginWindow());
+            RegisterCommand = new RelayCommand(_ => OpenRegisterWindow());
+            LogoutCommand = new RelayCommand(_ => Logout());
+            ExitCommand = new RelayCommand(_ => Application.Current.Shutdown());
+            CreateOrderCommand = new RelayCommand(_ => OpenCreateOrderWindow());
 
             // Subscribe to data change notifications
             _refreshService.DataChanged += async (s, e) => await LoadFoodItemsAsync();
@@ -244,6 +266,70 @@ namespace Restaurant.ViewModels
                     MessageBoxButton.OK,
                     MessageBoxImage.Error);
             }
+        }
+
+        private void UserStateService_UserStateChanged(object sender, EventArgs e)
+        {
+            // Notify UI of property changes related to user state
+            OnPropertyChanged(nameof(IsLoggedIn));
+            OnPropertyChanged(nameof(IsEmployee));
+            OnPropertyChanged(nameof(IsCustomer));
+            OnPropertyChanged(nameof(CurrentUserName));
+        }
+
+        private void OpenLoginWindow()
+        {
+            try
+            {
+                var viewModel = App.ServiceProvider.GetRequiredService<LoginViewModel>();
+                var window = new LoginWindow(viewModel)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+
+                window.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error opening Login window: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void OpenRegisterWindow()
+        {
+            try
+            {
+                var viewModel = App.ServiceProvider.GetRequiredService<RegisterViewModel>();
+                var window = new RegisterWindow(viewModel)
+                {
+                    Owner = Application.Current.MainWindow
+                };
+
+                window.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error opening Register window: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
+        }
+
+        private void Logout()
+        {
+            _userStateService.Logout();
+        }
+
+        private void OpenCreateOrderWindow()
+        {
+            //to-do
+            MessageBox.Show("Order creation", "to-do", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
 

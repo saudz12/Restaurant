@@ -87,3 +87,65 @@ public class UserService : IUserService
         };
     }
 }
+
+public interface IUserStateService
+{
+    event EventHandler UserStateChanged;
+
+    bool IsLoggedIn { get; }
+    bool IsEmployee { get; }
+    string CurrentUserEmail { get; }
+    UserDto CurrentUser { get; }
+
+    Task<bool> LoginAsync(string email, string password);
+    void Logout();
+}
+
+public class UserStateService : IUserStateService
+{
+    private readonly IUserService _userService;
+
+    private UserDto _currentUser;
+    public UserDto CurrentUser => _currentUser;
+
+    public bool IsLoggedIn => _currentUser != null;
+    public bool IsEmployee => _currentUser?.IsAngajat ?? false;
+    public string CurrentUserEmail => _currentUser?.Email;
+
+    public event EventHandler UserStateChanged;
+
+    public UserStateService(IUserService userService)
+    {
+        _userService = userService;
+    }
+
+    public async Task<bool> LoginAsync(string email, string password)
+    {
+        var loginDto = new UserLoginDto
+        {
+            Email = email,
+            Password = password
+        };
+
+        bool success = await _userService.LoginAsync(loginDto);
+
+        if (success)
+        {
+            _currentUser = await _userService.GetUserByEmailAsync(email);
+            OnUserStateChanged();
+        }
+
+        return success;
+    }
+
+    public void Logout()
+    {
+        _currentUser = null;
+        OnUserStateChanged();
+    }
+
+    protected virtual void OnUserStateChanged()
+    {
+        UserStateChanged?.Invoke(this, EventArgs.Empty);
+    }
+}

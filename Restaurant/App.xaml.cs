@@ -9,6 +9,7 @@ using Database;
 using System.IO;
 using Database.Services.Interfaces;
 using Restaurant.ViewModels;
+using Database.Services;
 
 namespace Restaurant
 {
@@ -61,6 +62,10 @@ namespace Restaurant
             // Register Windows
             services.AddTransient<MainWindow>();
             services.AddTransient<AddMenuViewModel>();
+
+            services.AddSingleton<IUserStateService, UserStateService>();
+            services.AddTransient<LoginViewModel>();
+            services.AddTransient<RegisterViewModel>();
         }
 
         protected override void OnStartup(StartupEventArgs e)
