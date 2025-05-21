@@ -86,6 +86,7 @@ public class LoginViewModel : INotifyPropertyChanged
 
             if (success)
             {
+                // Important: set the dialog result to true to close the window
                 DialogResult = true;
             }
             else

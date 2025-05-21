@@ -7,7 +7,7 @@
         xmlns:converters="clr-namespace:Restaurant.Converters" 
         xmlns:viewmodels="clr-namespace:Restaurant.ViewModels" d:DataContext="{d:DesignInstance Type=viewmodels:FoodDisplayViewModel}"
         mc:Ignorable="d"
-        Title="Restaurant Manager" Height="650" Width="1200">
+        Title="Restaurant Manager" Height="650" Width="1400">
     <Window.Resources>
         <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
 
@@ -37,63 +37,96 @@
 
         <Menu Grid.Row="0">
             <MenuItem Header="File">
-                <MenuItem Header="Login" Command="{Binding LoginCommand}"/>
-                <MenuItem Header="Register" Command="{Binding RegisterCommand}"/>
-                <Separator/>
+                <MenuItem Header="Login" Command="{Binding LoginCommand}" 
+                          Visibility="{Binding IsLoggedIn, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=inverse}"/>
+                <MenuItem Header="Register" Command="{Binding RegisterCommand}" 
+                          Visibility="{Binding IsLoggedIn, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=inverse}"/>
+                <Separator Visibility="{Binding IsLoggedIn, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 <MenuItem Header="Logout" Command="{Binding LogoutCommand}" 
-                      Visibility="{Binding IsLoggedIn, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                          Visibility="{Binding IsLoggedIn, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 <Separator/>
                 <MenuItem Header="Exit" Command="{Binding ExitCommand}"/>
             </MenuItem>
         </Menu>
 
         <!-- Header with category filter -->
-        <Border Grid.Row="0" BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="10">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="Filter by Category:" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                <ComboBox Width="150" 
-                  ItemsSource="{Binding AvailableCategorii}"
-                  SelectedItem="{Binding SelectedCategorie}"
-                  Margin="0,0,20,0">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding}"/>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-                <Button Content="Refresh" Command="{Binding RefreshCommand}" Padding="10,5" Margin="0,0,10,0"/>
-                <Button Content="Add New Dish" Command="{Binding AddNewPreparatCommand}" Padding="10,5" Background="#4CAF50" Foreground="White"/>
-                <Button Content="Add New Menu" Command="{Binding AddNewMenuCommand}" Padding="10,5" Background="#2196F3" Foreground="White" Margin="10,0,0,0"/>
-                
-                <TextBlock Text="Search:" VerticalAlignment="Center" Margin="20,0,10,0"/>
-                <TextBox Width="150" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,20,0"/>
-                <Expander Header="Filter by Allergens" Margin="0,0,10,0">
-                    <StackPanel>
-                        <TextBlock Text="Exclude dishes with these allergens:" Margin="0,5"/>
-                        <ItemsControl ItemsSource="{Binding AllergenFilters}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <CheckBox Content="{Binding Name}" 
-                              IsChecked="{Binding IsExcluded, Mode=TwoWay}" 
-                              Margin="5,2"
-                              Checked="AllergenFilter_Changed"
-                              Unchecked="AllergenFilter_Changed"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                    </StackPanel>
-                </Expander>
+        <Border Grid.Row="1" BorderBrush="#DDDDDD" BorderThickness="0,0,0,1" Padding="10">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-            </StackPanel>
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="Filter by Category:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <ComboBox Width="150" 
+                              ItemsSource="{Binding AvailableCategorii}"
+                              SelectedItem="{Binding SelectedCategorie}"
+                              Margin="0,0,20,0">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+
+                    <TextBlock Text="Search:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <TextBox Width="150" 
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                             Margin="0,0,10,0"/>
+
+                    <Button Content="Search" Command="{Binding SearchCommand}" Padding="10,5" Margin="0,0,10,0"/>
+                    <Button Content="Refresh" Command="{Binding RefreshCommand}" Padding="10,5" Margin="0,0,10,0"/>
+
+                    <!-- Buttons with conditional visibility -->
+                    <Button Content="Add New Dish" Command="{Binding AddNewPreparatCommand}" 
+                            Padding="10,5" Background="#4CAF50" Foreground="White" 
+                            Visibility="{Binding IsEmployee, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <Button Content="Add New Menu" Command="{Binding AddNewMenuCommand}" 
+                            Padding="10,5" Background="#2196F3" Foreground="White" Margin="10,0,0,0"
+                            Visibility="{Binding IsEmployee, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <Button Content="Create Order" Command="{Binding CreateOrderCommand}" 
+                            Padding="10,5" Background="#FF9800" Foreground="White" Margin="10,0,0,0"
+                            Visibility="{Binding IsCustomer, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <TextBlock Text="Search:" VerticalAlignment="Center" Margin="20,0,10,0"/>
+                    <TextBox Width="150" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,20,0"/>
+                    <Expander Header="Filter by Allergens" Margin="0,0,10,0">
+                        <StackPanel>
+                            <TextBlock Text="Exclude dishes with these allergens:" Margin="0,5"/>
+                            <ItemsControl ItemsSource="{Binding AllergenFilters}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <CheckBox Content="{Binding Name}" 
+                                IsChecked="{Binding IsExcluded, Mode=TwoWay}" 
+                                Margin="5,2"
+                                Checked="AllergenFilter_Changed"
+                                Unchecked="AllergenFilter_Changed"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+
+                <!-- User info display -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <TextBlock Text="{Binding CurrentUserName}" VerticalAlignment="Center" 
+                               Margin="0,0,10,0" FontWeight="SemiBold"
+                               Visibility="{Binding IsLoggedIn, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </StackPanel>
+            </Grid>
         </Border>
 
         <!-- Main content -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>

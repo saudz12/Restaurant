@@ -126,7 +126,7 @@ namespace Restaurant.ViewModels
 
             LoginCommand = new RelayCommand(_ => OpenLoginWindow());
             RegisterCommand = new RelayCommand(_ => OpenRegisterWindow());
-            LogoutCommand = new RelayCommand(_ => Logout());
+            LogoutCommand = new RelayCommand(_ => Logout(), _ => IsLoggedIn);
             ExitCommand = new RelayCommand(_ => Application.Current.Shutdown());
             CreateOrderCommand = new RelayCommand(_ => OpenCreateOrderWindow());
 
@@ -287,7 +287,17 @@ namespace Restaurant.ViewModels
                     Owner = Application.Current.MainWindow
                 };
 
-                window.ShowDialog();
+                bool? result = window.ShowDialog();
+
+                // Force UI update after login window closes
+                if (result == true)
+                {
+                    // Manually trigger property change notifications for all user state properties
+                    OnPropertyChanged(nameof(IsLoggedIn));
+                    OnPropertyChanged(nameof(IsEmployee));
+                    OnPropertyChanged(nameof(IsCustomer));
+                    OnPropertyChanged(nameof(CurrentUserName));
+                }
             }
             catch (Exception ex)
             {
@@ -323,7 +333,27 @@ namespace Restaurant.ViewModels
 
         private void Logout()
         {
-            _userStateService.Logout();
+            try
+            {
+                _userStateService.Logout();
+
+                // Force UI update after logout
+                OnPropertyChanged(nameof(IsLoggedIn));
+                OnPropertyChanged(nameof(IsEmployee));
+                OnPropertyChanged(nameof(IsCustomer));
+                OnPropertyChanged(nameof(CurrentUserName));
+
+                // Debug message
+                System.Diagnostics.Debug.WriteLine("User logged out successfully");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    $"Error during logout: {ex.Message}",
+                    "Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+            }
         }
 
         private void OpenCreateOrderWindow()

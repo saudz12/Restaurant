@@ -13,22 +13,32 @@ namespace Restaurant.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is bool boolValue)
+            if (value is not bool boolValue)
+                return Visibility.Collapsed;
+
+            bool visible = boolValue;
+
+            if (parameter is string paramString && paramString.ToLower() == "inverse")
             {
-                return boolValue ? Visibility.Visible : Visibility.Collapsed;
+                visible = !visible;
             }
 
-            return Visibility.Collapsed;
+            return visible ? Visibility.Visible : Visibility.Collapsed;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is Visibility visibility)
+            if (value is not Visibility visibility)
+                return false;
+
+            bool result = visibility == Visibility.Visible;
+
+            if (parameter is string paramString && paramString.ToLower() == "inverse")
             {
-                return visibility == Visibility.Visible;
+                result = !result;
             }
 
-            return false;
+            return result;
         }
     }
 }

@@ -142,6 +142,9 @@ public class UserStateService : IUserStateService
     {
         _currentUser = null;
         OnUserStateChanged();
+
+        // Debug message
+        System.Diagnostics.Debug.WriteLine("UserStateService: User logged out");
     }
 
     protected virtual void OnUserStateChanged()
